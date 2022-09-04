@@ -1,3 +1,5 @@
+require 'set'
+
 # LIMIT = 10 ** 2
 LIMIT = 10 ** 100
 
@@ -37,7 +39,7 @@ def random_gen_from_1
   [n, cnt]
 end
 
-def run
+def run_random
   steps = 2
   best_n = 0
   best_cnt = 0
@@ -64,7 +66,61 @@ def run
   puts best_n, best_cnt
 end
 
-run
-# n -= 1
-# puts f(n)
-# puts f(n)
+#############################
+
+# 2k+1 * 3 + 1 = 6k+4
+# ((n - 1) / 3).odd? => (n - 1) / 3 % 2 == 1 => (n - 1) % 6 == 3 => n % 6 == 4
+
+def run_beam
+  hard_limit = LIMIT * 1_000
+  beam_width = 20_000
+  crt_gen = [ 1 ]
+  best_score = 0
+  best_number = -1
+  score = 0
+
+  cands = []
+  while crt_gen.first < hard_limit
+    next_gen = []
+    crt_gen.each do |x|
+      if x % 3 == 0
+        cands << x
+        cands.shift if cands.size > 100
+        next
+      end
+      next_gen << 2 * x
+      next_gen << (x - 1) / 3 if x % 6 == 4 && (x - 1) / 3 != 1
+    end
+    crt_gen = next_gen.sort.take(beam_width)
+    score += 1
+    if crt_gen.first < LIMIT && score > best_score
+      best_score = score
+      best_number = crt_gen.first
+      puts score
+    end
+    puts "Beam = #{score}"
+    puts "Cand size = #{cands.size}"
+  end
+
+  puts "Checking cands"
+  cands.each do |x|
+    steps = 0
+    while 2 * x < LIMIT
+      steps += 1
+      x *= 2
+    end
+    crt_score = f(x)
+    if crt_score > best_score
+      best_score = crt_score
+      best_number = x
+      puts best_score
+      # puts "Check", best_score, f(best_number)
+    end
+  end
+
+  puts best_number
+  puts best_score
+  puts "Real score = ", f(best_number)
+end
+
+run_beam
